@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"golang-restaurant-management/database"
 	"golang-restaurant-management/models"
-	"net/http"
-	"time"
 	"math"
+	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -20,8 +21,30 @@ var foodCollection *mongo.Collection = database.OpenCollection(database.Client, 
 var validate = validator.New()
 
 func GetFoods() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
+	return func(c *gin.Context) {
+		var ctx, cancel = context.WithTimeout(context.Background(), 100*time.Second)
 
+		recordPerPage,err:=strvconv.Atoi(c.Querry("recordPerPage"))
+		if err!=nil || recordPerPage<1 {
+			recordPerPage = 10
+		}
+		page, err := strconv.Atoi(c.Querry("page"))
+		if err!=nil || page <1 {
+			page = 1
+		}
+		startIndex := (page-1) *recordPerPage
+		startIndex,err = strconv.Atoi(c.Query("startIndex"))
+
+
+		matchStage := bson.D{"$match",bson.D{{}}}
+		groupStage := bson.D{"$group":bson.D{{"_id",bson.D{{"_id","null"}}},{"total_count",bson.D{{"$sum",1}}}, }}}
+		projectStage := bson.D{
+			"$project",bson.D{
+				{"_id",0},
+				{"total_count",1},
+				{"food_items",bson.D{{"$slice",[]interface{}{"$data",startIndex,recordPerPage}}}}
+			}
+		}
 	}
 }
 
@@ -81,10 +104,9 @@ func CreateFood() gin.HandlerFunc {
 	}
 }
 
-
 func toFixed(num float64, precision int) float64 {
-    output := math.Pow(10, float64(precision))
-    return float64(math.Round(num*output)) / output
+	output := math.Pow(10, float64(precision))
+	return float64(math.Round(num*output)) / output
 }
 
 // func round(num float64) int {
@@ -100,4 +122,3 @@ func UpdateFood() gin.HandlerFunc {
 
 	}
 }
-
