@@ -7,13 +7,13 @@ import (
 	"golang-restaurant-management/models"
 	"net/http"
 	"time"
+	"math"
 
-	"go.mongodb.org/mongo-driver/mongo"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var foodCollection *mongo.Collection = database.OpenCollection(database.Client, "food")
@@ -63,8 +63,8 @@ func CreateFood() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
-		food.Created_at, _ = time.Parse(time.RFC3339, time.Now()).Format(time.RFC3339)
-		food.Updated_at, _ = time.Parse(time.RFC3339, time.Now()).Format(time.RFC3339)
+		food.Created_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
+		food.Updated_at, _ = time.Parse(time.RFC3339, time.Now().Format(time.RFC3339))
 		food.ID = primitive.NewObjectID()
 		food.Food_id = food.ID.Hex()
 		var num = toFixed(*food.Price, 2)
@@ -81,16 +81,23 @@ func CreateFood() gin.HandlerFunc {
 	}
 }
 
-func round(num float64) int {
 
+func toFixed(num float64, precision int) float64 {
+    output := math.Pow(10, float64(precision))
+    return float64(math.Round(num*output)) / output
 }
 
-func toFIxed(num float64, precision int) float64 {
+// func round(num float64) int {
 
-}
+// }
+
+// func toFIxed(num float64, precision int) float64 {
+
+// }
 
 func UpdateFood() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 	}
 }
+
